@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trackせん！Dashboard</title>
+  <link rel="stylesheet" href="../CSS/index.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="sidebar">
+    <img src="../PHOTOS/profile.png" alt="User" />
+    <div class="name">TRACK せん！</div>
+    <div class="email">tracksen@gmail.com</div>
+    <div class="menu">
+      <div class="active">Dashboard</div>
+      <div onclick="window.location.href='exp.html'" style="cursor:pointer;">Expenses</div>
+      <div onclick="window.location.href='walet.html'" style="cursor:pointer;" class="wallet-menu">Wallet</div>
+      <div onclick="window.location.href='setting.html'" style="cursor:pointer;">Settings</div>
+    </div>
+    <div class="footer">Active users: +70</div>
+  </div>
+
+  <div class="main">
+    <div class="cards">
+      <div class="card">
+        <h3>Total Spent</h3>
+        <p id="totalSpent">￥0</p>
+      </div>
+      <div class="card">
+        <h3>Monthly Budget</h3>
+        <p id="monthlyBudget">￥0</p>
+      </div>
+      <div class="card">
+        <h3>Savings</h3>
+        <p id="savings">￥0</p>
+      </div>
+    </div>
+
+    <div class="data-section">
+      <div class="card">
+        <h3>Recent Expenses</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Description</th>
+              <th>Date</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody id="expenseTableBody">
+            <!-- Rows will be added here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    
+    </div>
+  </div>
+
+  <!-- ✅ JavaScript Fetch Section -->
+  <script>
+  let monthlyBudget = 0; // Will be set from summary API or hardcoded
+
+  // Load budget summary data (get only monthly budget)
+  fetch('../PHP/get_summary.php')
+    .then(response => response.json())
+    .then(data => {
+      monthlyBudget = parseFloat(data.MonthlyBudget);
+      document.getElementById('monthlyBudget').innerText = `￥${monthlyBudget}`;
+    })
+    .catch(err => console.error('Error loading summary data:', err));
+
+  // Load expense data and update Total Spent and Savings
+  fetch('../PHP/get_expenses.php')
+    .then(response => response.json())
+    .then(data => {
+      const tbody = document.getElementById('expenseTableBody');
+      tbody.innerHTML = '';
+
+      let totalSpent = 0;
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.Category}</td>
+          <td>${row.Description}</td>
+          <td>${row.Date}</td>
+          <td>￥${row.Amount}</td>
+        `;
+        tbody.appendChild(tr);
+        totalSpent += parseFloat(row.Amount);
+      });
+
+      document.getElementById('totalSpent').innerText = `￥${totalSpent}`;
+      // Wait for monthlyBudget to be set before calculating savings
+      setTimeout(() => {
+        const savings = monthlyBudget - totalSpent;
+        document.getElementById('savings').innerText = `￥${savings}`;
+      }, 100);
+    })
+    .catch(err => console.error('Error loading expense data:', err));
+  </script>
+
+  <script>
+const translations = {
+  en: {
+    dashboard: "Dashboard",
+    expenses: "Expenses",
+    wallet: "Wallet",
+    settings: "Settings",
+    // ...add more keys as needed
+  },
+  ja: {
+    dashboard: "ダッシュボード",
+    expenses: "経費",
+    wallet: "ウォレット",
+    settings: "設定",
+    // ...add more keys as needed
+  }
+};
+
+function translatePage(lang) {
+  // Example for sidebar menu
+  document.querySelector('.menu .active').textContent = translations[lang].dashboard;
+  document.querySelector('.menu div:nth-child(2)').textContent = translations[lang].expenses;
+  document.querySelector('.menu .wallet-menu').textContent = translations[lang].wallet;
+  document.querySelector('.menu div:nth-child(4)').textContent = translations[lang].settings;
+  // ...add more translations as needed
+}
+
+// On page load, set language from localStorage if available
+const savedLang = localStorage.getItem('lang') || 'en';
+translatePage(savedLang);
+</script>
+
+<!-- Add this just before the closing </body> tag in all your HTML files -->
+<footer class="custom-footer">
+  @HELLO WORLD
+</footer>
+<style>
+.custom-footer {
+  width: 100%;
+  text-align: center;
+  padding: 18px 0;
+  background: linear-gradient(90deg, #4f8cff 0%, #6ee7b7 100%);
+  color: #fff;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  font-weight: 600;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 1000;
+  opacity: 0.96;
+  box-shadow: 0 -2px 12px 0 rgba(79,140,255,0.08);
+  transition: background 0.6s cubic-bezier(.4,0,.2,1), color 0.6s cubic-bezier(.4,0,.2,1), opacity 0.4s;
+  user-select: none;
+}
+.custom-footer:hover {
+  opacity: 1;
+  background: linear-gradient(90deg, #6ee7b7 0%, #4f8cff 100%);
+  color: #222;
+}
+</style>
+</body>
+</html>

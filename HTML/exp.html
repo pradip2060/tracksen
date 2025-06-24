@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Transactions</title>
+  <link rel="stylesheet" href="../CSS/index.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .custom-footer {
+      width: 100%;
+      text-align: center;
+      padding: 18px 0;
+      background: linear-gradient(90deg, #4f8cff 0%, #6ee7b7 100%);
+      color: #fff;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 2px;
+      font-weight: 600;
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      z-index: 1000;
+      opacity: 0.96;
+      box-shadow: 0 -2px 12px 0 rgba(79,140,255,0.08);
+      transition: background 0.6s cubic-bezier(.4,0,.2,1), color 0.6s cubic-bezier(.4,0,.2,1), opacity 0.4s;
+      user-select: none;
+    }
+    .custom-footer:hover {
+      opacity: 1;
+      background: linear-gradient(90deg, #6ee7b7 0%, #4f8cff 100%);
+      color: #222;
+    }
+    .main {
+      padding-bottom: 140px; /* Ensures content is not hidden behind the footer */
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    .charts-flex {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 32px;
+    }
+    .chart-block {
+      flex: 1 1 400px;
+      max-width: 450px;
+      min-width: 320px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px 0 rgba(79,140,255,0.08);
+      padding: 16px 8px 24px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .chart-block h2 {
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    #incomeExpenditurePieChart,
+    #expensesBarChart {
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      height: auto;
+    }
+    @media (max-width: 900px) {
+      .charts-flex {
+        flex-direction: column;
+        align-items: center;
+      }
+      .chart-block {
+        max-width: 100%;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main">
+    <h2>Daily Transaction Details</h2>
+    <table id="transactionsTable">
+      <tr>
+        <th>Date</th>
+        <th>Category</th>
+        <th>Description</th>
+        <th>Type</th>
+        <th>Amount</th>
+      </tr>
+      <!-- Rows will be added by JavaScript -->
+    </table>
+
+    <div class="charts-flex">
+      <div class="chart-block">
+        <h2>Income & Expenditure Pie Chart</h2>
+        <canvas id="incomeExpenditurePieChart" width="400" height="400"></canvas>
+      </div>
+      <div class="chart-block">
+        <h2>Expenses by Category (Bar Graph)</h2>
+        <canvas id="expensesBarChart" width="400" height="400"></canvas>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Fetch transactions from the same PHP as index.html
+    fetch('../PHP/get_expenses.php')
+      .then(response => response.json())
+      .then(data => {
+        const table = document.getElementById('transactionsTable');
+        const categoryTotals = {};
+
+        data.forEach(row => {
+          // Add all transactions to the table
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${row.Date}</td>
+            <td>${row.Category}</td>
+            <td>${row.Description}</td>
+            <td>${row.Type}</td>
+            <td>￥${row.Amount}</td>
+          `;
+          table.appendChild(tr);
+
+          // Only sum expenses (not income)
+          if (row.Type !== 'Income') {
+            if (!categoryTotals[row.Category]) {
+              categoryTotals[row.Category] = 0;
+            }
+            categoryTotals[row.Category] += parseFloat(row.Amount);
+          }
+        });
+
+        // Prepare data for charts
+        const categories = Object.keys(categoryTotals);
+        const amounts = Object.values(categoryTotals);
+
+        // Draw the pie chart for expenses by category
+        const ctxPie = document.getElementById('incomeExpenditurePieChart').getContext('2d');
+        new Chart(ctxPie, {
+          type: 'pie',
+          data: {
+            labels: categories,
+            datasets: [{
+              data: amounts,
+              backgroundColor: [
+                '#f44336', '#ff9800', '#ffc107', '#4caf50', '#2196f3', '#9c27b0', '#00bcd4', '#e91e63'
+              ],
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'top' },
+              title: { display: true, text: 'Expenses by Category' }
+            }
+          }
+        });
+
+        // Draw the bar chart for expenses by category
+        const ctxBar = document.getElementById('expensesBarChart').getContext('2d');
+        new Chart(ctxBar, {
+          type: 'bar',
+          data: {
+            labels: categories,
+            datasets: [{
+              label: 'Amount (￥)',
+              data: amounts,
+              backgroundColor: [
+                '#f44336', '#ff9800', '#ffc107', '#4caf50', '#2196f3', '#9c27b0', '#00bcd4', '#e91e63'
+              ],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              title: { display: true, text: 'Expenses by Category (Bar Graph)' }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return '￥' + value;
+                  }
+                }
+              }
+            }
+          }
+        });
+      })
+      .catch(err => console.error('Error loading transactions:', err));
+  </script>
+</body>
+</html>

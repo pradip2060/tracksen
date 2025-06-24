@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wallet Details</title>
+  <link rel="stylesheet" href="../CSS/index.css" />
+</head>
+<body>
+  <div class="main">
+    <h2>Wallet Overview</h2>
+    <div class="wallet-cards" style="display: flex; flex-direction: row; gap: 20px; align-items: flex-start; justify-content: center;">
+      <div class="card">
+        <h3>Total Expenses</h3>
+        <p id="currentBalance">￥0</p>
+      </div>
+      <div class="card">
+        <h3>Savings</h3>
+        <p id="walletSavings">￥0</p>
+      </div>
+      <div class="card">
+        <h3>Card Amount</h3>
+        <p id="investments">￥0</p>
+      </div>
+    </div>
+    
+    </table>
+  </div>
+  <script>
+fetch('../PHP/get_wallet.php')
+  .then(response => response.json())
+  .then(data => {
+    // Update cards
+    document.getElementById('currentBalance').innerText = `￥${data.current_balance}`;
+    document.getElementById('walletSavings').innerText = `￥${data.savings}`;
+    document.getElementById('investments').innerText = `￥${data.investments}`;
+    // Update table
+    document.getElementById('currentBalanceTable').innerText = `￥${data.current_balance}`;
+    document.getElementById('walletSavingsTable').innerText = `￥${data.savings}`;
+    document.getElementById('investmentsTable').innerText = `￥${data.investments}`;
+    document.getElementById('currentBalanceDate').innerText = data.current_balance_date;
+    document.getElementById('walletSavingsDate').innerText = data.savings_date;
+    document.getElementById('investmentsDate').innerText = data.investments_date;
+  })
+  .catch(err => console.error('Error loading wallet data:', err));
+
+let monthlyBudget = 0;
+let totalIncome = 0;
+let totalExpenses = 0;
+
+// Fetch monthly budget
+fetch('../PHP/get_summary.php')
+  .then(response => response.json())
+  .then(data => {
+    monthlyBudget = parseFloat(data.MonthlyBudget);
+    updateWallet();
+  })
+  .catch(err => console.error('Error loading summary data:', err));
+
+// Fetch transactions
+fetch('../PHP/get_expenses.php')
+  .then(response => response.json())
+  .then(data => {
+    totalIncome = 0;
+    totalExpenses = 0;
+    data.forEach(row => {
+      if (row.Type === 'Income') {
+        totalIncome += parseFloat(row.Amount);
+      } else {
+        totalExpenses += parseFloat(row.Amount);
+      }
+    });
+    updateWallet();
+  })
+  .catch(err => console.error('Error loading transactions:', err));
+
+// Update wallet display
+function updateWallet() {
+  // Only update if both monthlyBudget and expenses are loaded
+  if (monthlyBudget === 0 && totalIncome === 0 && totalExpenses === 0) return;
+
+  const currentBalance = totalIncome - totalExpenses;
+  const savings = monthlyBudget - totalExpenses;
+
+  // Update cards
+  document.getElementById('currentBalance').innerText = `￥${currentBalance}`;
+  document.getElementById('walletSavings').innerText = `￥${savings}`;
+  document.getElementById('investments').innerText = `￥0`; // Set as needed
+
+  // Update table
+  document.getElementById('currentBalanceTable').innerText = `￥${currentBalance}`;
+  document.getElementById('walletSavingsTable').innerText = `￥${savings}`;
+  document.getElementById('investmentsTable').innerText = `￥0`; // Set as needed
+
+  // Dates can be set if available
+  document.getElementById('currentBalanceDate').innerText = new Date().toLocaleDateString();
+  document.getElementById('walletSavingsDate').innerText = new Date().toLocaleDateString();
+  document.getElementById('investmentsDate').innerText = '-';
+}
+
+const translations = {
+  en: {
+    dashboard: "Dashboard",
+    expenses: "Expenses",
+    wallet: "Wallet",
+    settings: "Settings",
+    // ...add more keys as needed
+  },
+  ja: {
+    dashboard: "ダッシュボード",
+    expenses: "経費",
+    wallet: "ウォレット",
+    settings: "設定",
+    // ...add more keys as needed
+  }
+};
+
+function translatePage(lang) {
+  // Example for sidebar menu
+  document.querySelector('.menu .active').textContent = translations[lang].dashboard;
+  document.querySelector('.menu div:nth-child(2)').textContent = translations[lang].expenses;
+  document.querySelector('.menu .wallet-menu').textContent = translations[lang].wallet;
+  document.querySelector('.menu div:nth-child(4)').textContent = translations[lang].settings;
+  // ...add more translations as needed
+}
+
+// On page load, set language from localStorage if available
+const savedLang = localStorage.getItem('lang') || 'en';
+translatePage(savedLang);
+</script>
+<footer class="custom-footer">
+  @HELLO WORLD
+</footer>
+<style>
+.custom-footer {
+  width: 100%;
+  text-align: center;
+  padding: 18px 0;
+  background: linear-gradient(90deg, #4f8cff 0%, #6ee7b7 100%);
+  color: #fff;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  font-weight: 600;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 1000;
+  opacity: 0.96;
+  box-shadow: 0 -2px 12px 0 rgba(79,140,255,0.08);
+  transition: background 0.6s cubic-bezier(.4,0,.2,1), color 0.6s cubic-bezier(.4,0,.2,1), opacity 0.4s;
+  user-select: none;
+}
+.custom-footer:hover {
+  opacity: 1;
+  background: linear-gradient(90deg, #6ee7b7 0%, #4f8cff 100%);
+  color: #222;
+}
+</style>
+</body>
+</html>
