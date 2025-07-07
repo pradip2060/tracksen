@@ -71,7 +71,7 @@ if (isset($_SESSION['user'])) {
     <h2>ログイン</h2>
 
     <?php
-    // エラーがある場合に表示（例: auth.php から戻されたエラー）
+
     if (isset($_GET['error'])) {
         echo '<div class="error">' . htmlspecialchars($_GET['error']) . '</div>';
     }
