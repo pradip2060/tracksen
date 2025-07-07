@@ -8,24 +8,21 @@ window.addEventListener('DOMContentLoaded', function() {
     }, 1500);
 });
 
-document.getElementById('loginForm').onsubmit = function(e) {
-    e.preventDefault();
-    const login = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const errorMsg = document.getElementById('errorMsg');
-    const allowedUsers = ['userP', 'userA', 'userS', '1111'];
-    if (allowedUsers.includes(login) && password === '1111') {
-        // Show overlay before redirect
-        const overlay = document.getElementById('loadingOverlay');
-        overlay.style.display = 'flex';
-        overlay.style.opacity = '1';
-        setTimeout(() => {
-            window.location.href = 'index.html'; // Redirect to index.html after login
-        }, 1200);
-    } else {
-        errorMsg.textContent = 'ログインIDまたはパスワードが間違っています。';
-    }
-};
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  // Example: simple check (replace with your real validation)
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+
+  // Dummy check: allow any non-empty input
+  if (email && password) {
+    // Redirect to index.html after successful login
+    window.location.href = '../HTML/index.html';
+  } else {
+    document.getElementById('errorMsg').textContent = 'ログインIDとパスワードを入力してください';
+  }
+});
 function redirectWithAnimation(path) {
     const overlay = document.getElementById('loadingOverlay');
     overlay.style.display = 'flex';

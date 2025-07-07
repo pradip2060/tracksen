@@ -13,7 +13,8 @@ if ($conn->connect_error) {
   exit();
 }
 
-$sql = "SELECT Category, Description, Date, Amount FROM Expenses ORDER BY Date DESC";
+// Select from editexpenses table and include ID
+$sql = "SELECT ID, Category, Description, Date, Amount FROM editexpenses ORDER BY Date DESC";
 $result = $conn->query($sql);
 
 $data = [];

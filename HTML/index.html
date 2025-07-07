@@ -6,6 +6,122 @@
   <title>Trackせん！Dashboard</title>
   <link rel="stylesheet" href="../CSS/index.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Add your styles here */
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: #fff;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border: none;
+    }
+    th {
+      background-color: #f3f3f3;
+      font-weight: 600;
+    }
+    tbody tr:hover {
+      background: #f5faff;
+    }
+    .edit-btn { background: #4f8cff; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
+    .edit-btn:hover { background: #357ae8; }
+    .custom-footer {
+      width: 100%;
+      text-align: center;
+      padding: 18px 0;
+      background: linear-gradient(90deg, #4f8cff 0%, #6ee7b7 100%);
+      color: #fff;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 2px;
+      font-weight: 600;
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      z-index: 1000;
+      opacity: 0.96;
+      box-shadow: 0 -2px 12px 0 rgba(79,140,255,0.08);
+      transition: background 0.6s cubic-bezier(.4,0,.2,1), color 0.6s cubic-bezier(.4,0,.2,1), opacity 0.4s;
+      user-select: none;
+    }
+    .custom-footer:hover {
+      opacity: 1;
+      background: linear-gradient(90deg, #6ee7b7 0%, #4f8cff 100%);
+      color: #222;
+    }
+    .editing-row {
+      background-color: #fffbe6 !important;
+      border-left: 4px solid #ffc107;
+      box-shadow: 0 2px 8px rgba(255,193,7,0.08);
+      position: relative;
+    }
+    .editing-row td:first-child::before {
+      content: "✏️";
+      margin-right: 6px;
+      color: #ffc107;
+    }
+    .editing-form {
+      border: 2px solid #4f8cff;
+      padding: 10px;
+      border-radius: 8px;
+      background-color: #fafafa;
+    }
+    .edit-sidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 300px;
+      height: 100%;
+      background: #fff;
+      box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      display: none;
+      flex-direction: column;
+      z-index: 2000;
+    }
+    .edit-sidebar.active {
+      display: flex;
+    }
+    .edit-sidebar h3 {
+      margin-top: 0;
+    }
+    .edit-sidebar label {
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    .edit-sidebar input {
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .edit-sidebar button {
+      margin-top: 15px;
+      padding: 10px;
+      background: #4f8cff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .edit-sidebar button:hover {
+      background: #357ae8;
+    }
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
   <div class="sidebar">
@@ -47,6 +163,7 @@
               <th>Description</th>
               <th>Date</th>
               <th>Amount</th>
+              <th>Edit</th>
             </tr>
           </thead>
           <tbody id="expenseTableBody">
@@ -56,13 +173,53 @@
       </div>
     </div>
 
+    <!-- Add Expense Form -->
+    <div class="add-expense-form">
+      <h3>Add New Expense</h3>
+      <form id="expenseForm">
+        <input type="text" id="category" placeholder="Category" required>
+        <input type="text" id="description" placeholder="Description" required>
+        <input type="date" id="date" required>
+        <input type="number" id="amount" placeholder="Amount" required min="0" step="0.01">
+        <button type="submit">Add Expense</button>
+      </form>
+    </div>
+
+    <canvas id="expenseChart" width="400" height="400"></canvas>
     
     </div>
   </div>
 
+  <!-- Edit Expense Sidebar -->
+  <div class="edit-sidebar" id="editSidebar">
+    <button class="close-btn" onclick="closeEditSidebar()">&times;</button>
+    <h3>Edit Expense</h3>
+    <form id="editExpenseForm">
+      <input type="hidden" id="editId">
+      <div>
+        <label>Category</label>
+        <input type="text" id="editCategory" required>
+      </div>
+      <div>
+        <label>Description</label>
+        <input type="text" id="editDescription" required>
+      </div>
+      <div>
+        <label>Date</label>
+        <input type="date" id="editDate" required>
+      </div>
+      <div>
+        <label>Amount</label>
+        <input type="number" id="editAmount" required min="0" step="0.01">
+      </div>
+      <button type="submit">Save Changes</button>
+    </form>
+  </div>
+
   <!-- ✅ JavaScript Fetch Section -->
   <script>
-  let monthlyBudget = 0; // Will be set from summary API or hardcoded
+  let monthlyBudget = 0;
+  let editId = null;
 
   // Load budget summary data (get only monthly budget)
   fetch('../PHP/get_summary.php')
@@ -74,33 +231,185 @@
     .catch(err => console.error('Error loading summary data:', err));
 
   // Load expense data and update Total Spent and Savings
-  fetch('../PHP/get_expenses.php')
+  function reloadExpenses() {
+    fetch('../PHP/get_expenses.php')
+      .then(response => response.json())
+      .then(data => {
+        const tbody = document.getElementById('expenseTableBody');
+        tbody.innerHTML = '';
+
+        let totalSpent = 0;
+        data.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${row.Category}</td>
+            <td>${row.Description}</td>
+            <td>${row.Date}</td>
+            <td>￥${row.Amount}</td>
+            <td><button class="edit-btn" data-id="${row.ID}">Edit</button></td>
+          `;
+          tbody.appendChild(tr);
+          totalSpent += parseFloat(row.Amount);
+        });
+        document.getElementById('totalSpent').innerText = `￥${totalSpent}`;
+        document.getElementById('savings').innerText = `￥${monthlyBudget - totalSpent}`;
+
+        // Attach edit handlers
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+          btn.onclick = function() {
+            const tr = btn.closest('tr');
+            document.getElementById('editId').value = btn.dataset.id;
+            document.getElementById('editCategory').value = tr.children[0].textContent;
+            document.getElementById('editDescription').value = tr.children[1].textContent;
+            document.getElementById('editDate').value = tr.children[2].textContent;
+            document.getElementById('editAmount').value = tr.children[3].textContent.replace('￥','');
+            document.getElementById('editSidebar').classList.add('active');
+          };
+        });
+      })
+      .catch(err => console.error('Error loading expense data:', err));
+  }
+
+  // Initial load
+  reloadExpenses();
+
+  // Add/Edit Expense
+  document.getElementById('expenseForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const category = document.getElementById('category').value;
+    const description = document.getElementById('description').value;
+    const date = document.getElementById('date').value;
+    const amount = document.getElementById('amount').value;
+
+    if (editId) {
+      // Edit mode
+      fetch('../PHP/edit_expense.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `id=${editId}&category=${encodeURIComponent(category)}&description=${encodeURIComponent(description)}&date=${encodeURIComponent(date)}&amount=${encodeURIComponent(amount)}`
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Expense updated!');
+          editId = null;
+          clearEditHighlight();
+          this.reset();
+          reloadExpenses();
+        } else {
+          alert('Failed to update expense');
+        }
+      });
+    } else {
+      // Add mode
+      fetch('../PHP/add_expense.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `category=${encodeURIComponent(category)}&description=${encodeURIComponent(description)}&date=${encodeURIComponent(date)}&amount=${encodeURIComponent(amount)}`
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Expense added!');
+          this.reset();
+          reloadExpenses();
+        } else {
+          alert('Failed to add expense');
+        }
+      });
+    }
+  });
+
+  // Chart.js pie chart
+  let chart;
+  function drawChart(categoryTotals) {
+    const ctx = document.getElementById('expenseChart').getContext('2d');
+    if (chart) chart.destroy();
+    chart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: Object.keys(categoryTotals),
+        datasets: [{
+          data: Object.values(categoryTotals),
+          backgroundColor: [
+            '#f44336', '#ff9800', '#ffc107', '#4caf50', '#2196f3', '#9c27b0', '#00bcd4', '#e91e63'
+          ],
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' },
+          title: { display: true, text: 'Expenses by Category' }
+        }
+      }
+    });
+  }
+
+  // Initial load
+  reloadExpenses();
+
+  let currentEditingRow = null;
+
+  // Clear edit highlight function
+  function clearEditHighlight() {
+    if (currentEditingRow) currentEditingRow.classList.remove('editing-row');
+    document.getElementById('expenseForm').classList.remove('editing-form');
+    currentEditingRow = null;
+    document.querySelector('#expenseForm button[type="submit"]').textContent = "Add Expense";
+  }
+
+  // Close edit sidebar
+  function closeEditSidebar() {
+    document.getElementById('editSidebar').classList.remove('active');
+  }
+
+  // Open edit sidebar and load data
+  function openEditSidebar(expenseId) {
+    // Fetch expense data by ID
+    fetch(`../PHP/get_expense.php?id=${expenseId}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data) {
+          document.getElementById('editId').value = data.ID;
+          document.getElementById('editCategory').value = data.Category;
+          document.getElementById('editDescription').value = data.Description;
+          document.getElementById('editDate').value = data.Date;
+          document.getElementById('editAmount').value = data.Amount;
+
+          // Show the sidebar
+          document.getElementById('editSidebar').classList.add('active');
+        }
+      })
+      .catch(err => console.error('Error loading expense data:', err));
+  }
+
+  // Edit expense form submission
+  document.getElementById('editExpenseForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const id = document.getElementById('editId').value;
+    const category = document.getElementById('editCategory').value;
+    const description = document.getElementById('editDescription').value;
+    const date = document.getElementById('editDate').value;
+    const amount = document.getElementById('editAmount').value;
+
+    fetch('../PHP/edit_expense.php', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: `id=${id}&category=${encodeURIComponent(category)}&description=${encodeURIComponent(description)}&date=${encodeURIComponent(date)}&amount=${encodeURIComponent(amount)}`
+    })
     .then(response => response.json())
     .then(data => {
-      const tbody = document.getElementById('expenseTableBody');
-      tbody.innerHTML = '';
+      if (data.success) {
+        alert('Expense updated!');
+        document.getElementById('editSidebar').classList.remove('active');
+        reloadExpenses();
+      } else {
+        alert('Failed to update expense');
+      }
+    });
+  });
 
-      let totalSpent = 0;
-      data.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${row.Category}</td>
-          <td>${row.Description}</td>
-          <td>${row.Date}</td>
-          <td>￥${row.Amount}</td>
-        `;
-        tbody.appendChild(tr);
-        totalSpent += parseFloat(row.Amount);
-      });
-
-      document.getElementById('totalSpent').innerText = `￥${totalSpent}`;
-      // Wait for monthlyBudget to be set before calculating savings
-      setTimeout(() => {
-        const savings = monthlyBudget - totalSpent;
-        document.getElementById('savings').innerText = `￥${savings}`;
-      }, 100);
-    })
-    .catch(err => console.error('Error loading expense data:', err));
   </script>
 
   <script>
@@ -139,31 +448,5 @@ translatePage(savedLang);
 <footer class="custom-footer">
   @HELLO WORLD
 </footer>
-<style>
-.custom-footer {
-  width: 100%;
-  text-align: center;
-  padding: 18px 0;
-  background: linear-gradient(90deg, #4f8cff 0%, #6ee7b7 100%);
-  color: #fff;
-  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-  font-size: 1.1rem;
-  letter-spacing: 2px;
-  font-weight: 600;
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  z-index: 1000;
-  opacity: 0.96;
-  box-shadow: 0 -2px 12px 0 rgba(79,140,255,0.08);
-  transition: background 0.6s cubic-bezier(.4,0,.2,1), color 0.6s cubic-bezier(.4,0,.2,1), opacity 0.4s;
-  user-select: none;
-}
-.custom-footer:hover {
-  opacity: 1;
-  background: linear-gradient(90deg, #6ee7b7 0%, #4f8cff 100%);
-  color: #222;
-}
-</style>
 </body>
 </html>

@@ -11,16 +11,16 @@
     <h2>Wallet Overview</h2>
     <div class="wallet-cards" style="display: flex; flex-direction: row; gap: 20px; align-items: flex-start; justify-content: center;">
       <div class="card">
-        <h3>Total Expenses</h3>
-        <p id="currentBalance">￥0</p>
+        <h3>Total Spent</h3>
+        <p id="totalSpent">￥0</p>
       </div>
       <div class="card">
-        <h3>Savings</h3>
+        <h3>Card</h3>
+        <p id="monthlyBudget">￥0</p>
+      </div>
+      <div class="card">
+        <h3>current_balance</h3>
         <p id="walletSavings">￥0</p>
-      </div>
-      <div class="card">
-        <h3>Card Amount</h3>
-        <p id="investments">￥0</p>
       </div>
     </div>
     
@@ -45,57 +45,36 @@ fetch('../PHP/get_wallet.php')
   .catch(err => console.error('Error loading wallet data:', err));
 
 let monthlyBudget = 0;
-let totalIncome = 0;
-let totalExpenses = 0;
+let totalSpent = 0;
 
 // Fetch monthly budget
 fetch('../PHP/get_summary.php')
   .then(response => response.json())
   .then(data => {
     monthlyBudget = parseFloat(data.MonthlyBudget);
+    document.getElementById('monthlyBudget').innerText = `￥${monthlyBudget}`;
     updateWallet();
   })
   .catch(err => console.error('Error loading summary data:', err));
 
-// Fetch transactions
+// Fetch total spent from expenses
 fetch('../PHP/get_expenses.php')
   .then(response => response.json())
   .then(data => {
-    totalIncome = 0;
-    totalExpenses = 0;
+    totalSpent = 0;
     data.forEach(row => {
-      if (row.Type === 'Income') {
-        totalIncome += parseFloat(row.Amount);
-      } else {
-        totalExpenses += parseFloat(row.Amount);
-      }
+      totalSpent += parseFloat(row.Amount);
     });
+    document.getElementById('totalSpent').innerText = `￥${totalSpent}`;
     updateWallet();
   })
-  .catch(err => console.error('Error loading transactions:', err));
+  .catch(err => console.error('Error loading expenses:', err));
 
 // Update wallet display
 function updateWallet() {
-  // Only update if both monthlyBudget and expenses are loaded
-  if (monthlyBudget === 0 && totalIncome === 0 && totalExpenses === 0) return;
-
-  const currentBalance = totalIncome - totalExpenses;
-  const savings = monthlyBudget - totalExpenses;
-
-  // Update cards
-  document.getElementById('currentBalance').innerText = `￥${currentBalance}`;
+  if (monthlyBudget === 0 && totalSpent === 0) return;
+  const savings = monthlyBudget - totalSpent;
   document.getElementById('walletSavings').innerText = `￥${savings}`;
-  document.getElementById('investments').innerText = `￥0`; // Set as needed
-
-  // Update table
-  document.getElementById('currentBalanceTable').innerText = `￥${currentBalance}`;
-  document.getElementById('walletSavingsTable').innerText = `￥${savings}`;
-  document.getElementById('investmentsTable').innerText = `￥0`; // Set as needed
-
-  // Dates can be set if available
-  document.getElementById('currentBalanceDate').innerText = new Date().toLocaleDateString();
-  document.getElementById('walletSavingsDate').innerText = new Date().toLocaleDateString();
-  document.getElementById('investmentsDate').innerText = '-';
 }
 
 const translations = {
