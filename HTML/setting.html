@@ -136,11 +136,41 @@ document.getElementById('settingsForm').addEventListener('submit', function(e) {
   });
 });
 
+// Currency symbols
+const currencySymbols = {
+  JPY: "¥",
+  USD: "$",
+  EUR: "€"
+};
+
+// Get saved currency or default to JPY
+const savedCurrency = localStorage.getItem('currency') || 'JPY';
+
+// Update all currency displays (just the symbol, not the value)
+function updateCurrencySymbol(currency) {
+  document.querySelectorAll('[data-currency-amount]').forEach(el => {
+    const baseAmount = el.getAttribute('data-currency-amount');
+    el.textContent = currencySymbols[currency] + baseAmount;
+  });
+}
+
+// On page load, update all currency symbols
+updateCurrencySymbol(savedCurrency);
+
+// When currency changes, update symbol and save to localStorage
+document.getElementById('currency').addEventListener('change', function() {
+  localStorage.setItem('currency', this.value);
+  updateCurrencySymbol(this.value);
+});
+
+// On page load, fetch and display the budget
 fetch('../PHP/get_summary.php')
   .then(response => response.json())
   .then(data => {
     if (data.MonthlyBudget !== undefined) {
       document.getElementById('monthlyBudget').value = data.MonthlyBudget;
+      document.getElementById('monthlyBudgetDisplay').setAttribute('data-currency-amount', data.MonthlyBudget);
+      updateCurrencySymbol(document.getElementById('currency').value);
     }
   });
   </script>

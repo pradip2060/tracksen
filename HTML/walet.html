@@ -16,7 +16,7 @@
       </div>
       <div class="card">
         <h3>Card</h3>
-        <p id="monthlyBudget">￥0</p>
+        <p id="monthlyBudget" data-currency-amount="0">￥0</p>
       </div>
       <div class="card">
         <h3>current_balance</h3>
@@ -53,6 +53,7 @@ fetch('../PHP/get_summary.php')
   .then(data => {
     monthlyBudget = parseFloat(data.MonthlyBudget);
     document.getElementById('monthlyBudget').innerText = `￥${monthlyBudget}`;
+    document.getElementById('monthlyBudget').setAttribute('data-currency-amount', data.MonthlyBudget);
     updateWallet();
   })
   .catch(err => console.error('Error loading summary data:', err));
@@ -76,6 +77,27 @@ function updateWallet() {
   const savings = monthlyBudget - totalSpent;
   document.getElementById('walletSavings').innerText = `￥${savings}`;
 }
+
+// Currency symbols
+const currencySymbols = {
+  JPY: "¥",
+  USD: "$",
+  EUR: "€"
+};
+
+// Get saved currency or default to JPY
+const savedCurrency = localStorage.getItem('currency') || 'JPY';
+
+// Update all currency displays (just the symbol, not the value)
+function updateCurrencySymbol(currency) {
+  document.querySelectorAll('[data-currency-amount]').forEach(el => {
+    const baseAmount = el.getAttribute('data-currency-amount');
+    el.textContent = currencySymbols[currency] + baseAmount;
+  });
+}
+
+// On page load, update all currency symbols
+updateCurrencySymbol(savedCurrency);
 
 const translations = {
   en: {

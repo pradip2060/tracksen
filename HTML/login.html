@@ -119,5 +119,13 @@
     }
     </style>
     <script src="../JS/login.js"></script>
+    <script>
+  document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    // ...your login AJAX or validation logic...
+    // On success:
+    window.location.href = "index.html";
+  });
+</script>
 </body>
 </html>

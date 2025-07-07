@@ -10,18 +10,22 @@ window.addEventListener('DOMContentLoaded', function() {
 
 document.getElementById('loginForm').addEventListener('submit', function(e) {
   e.preventDefault();
-
-  // Example: simple check (replace with your real validation)
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
 
-  // Dummy check: allow any non-empty input
-  if (email && password) {
-    // Redirect to index.html after successful login
-    window.location.href = '../HTML/index.html';
-  } else {
-    document.getElementById('errorMsg').textContent = 'ログインIDとパスワードを入力してください';
-  }
+  fetch('../php/login.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      window.location.href = "index.html";
+    } else {
+      document.getElementById('errorMsg').textContent = data.error || "ログインに失敗しました";
+    }
+  });
 });
 function redirectWithAnimation(path) {
     const overlay = document.getElementById('loadingOverlay');
