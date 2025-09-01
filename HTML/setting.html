@@ -35,144 +35,148 @@
       </div>
       <button type="submit">Save Settings</button>
     </form>
+
     <div id="saveMessage" style="display:none; color:green; margin-top:10px;">
       Settings saved!
     </div>
+
+    <!-- ✅ Translatable Logout Button -->
+    <form action="/tracksen/logout.php" method="POST" style="margin-top: 20px;">
+      <button type="submit" class="logout-button" id="logoutBtn">Logout</button>
+    </form>
   </div>
-  <footer class="custom-footer">
-  @HELLO WORLD
-</footer>
-<style>
-.custom-footer {
-  width: 100%;
-  text-align: center;
-  padding: 18px 0;
-  background: linear-gradient(90deg, #4f8cff 0%, #6ee7b7 100%);
-  color: #fff;
-  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-  font-size: 1.1rem;
-  letter-spacing: 2px;
-  font-weight: 600;
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  z-index: 1000;
-  opacity: 0.96;
-  box-shadow: 0 -2px 12px 0 rgba(79,140,255,0.08);
-  transition: background 0.6s cubic-bezier(.4,0,.2,1), color 0.6s cubic-bezier(.4,0,.2,1), opacity 0.4s;
-  user-select: none;
-}
-.custom-footer:hover {
-  opacity: 1;
-  background: linear-gradient(90deg, #6ee7b7 0%, #4f8cff 100%);
-  color: #222;
-}
-</style>
+
+  <!-- Footer -->
+  <footer class="custom-footer">@HELLO WORLD</footer>
+
+  <!-- Style -->
+  <style>
+    .custom-footer {
+      width: 100%;
+      text-align: center;
+      padding: 18px 0;
+      background: linear-gradient(90deg, #4f8cff 0%, #6ee7b7 100%);
+      color: #fff;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 2px;
+      font-weight: 600;
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      z-index: 1000;
+      opacity: 0.96;
+      box-shadow: 0 -2px 12px 0 rgba(79,140,255,0.08);
+      transition: background 0.6s cubic-bezier(.4,0,.2,1), color 0.6s cubic-bezier(.4,0,.2,1), opacity 0.4s;
+      user-select: none;
+    }
+    .custom-footer:hover {
+      opacity: 1;
+      background: linear-gradient(90deg, #6ee7b7 0%, #4f8cff 100%);
+      color: #222;
+    }
+  </style>
+
+  <!-- Script -->
   <script>
-const translations = {
-  en: {
-    settings: "Settings",
-    currency: "Currency:",
-    monthlyBudget: "Monthly Budget:",
-    language: "Language:",
-    notifications: "Enable Notifications:",
-    save: "Save Settings",
-    saved: "Settings saved!"
-  },
-  ja: {
-    settings: "設定",
-    currency: "通貨：",
-    monthlyBudget: "月間予算：",
-    language: "言語：",
-    notifications: "通知を有効にする：",
-    save: "設定を保存",
-    saved: "設定が保存されました！"
-  }
-};
+    const translations = {
+      en: {
+        settings: "Settings",
+        currency: "Currency:",
+        monthlyBudget: "Monthly Budget:",
+        language: "Language:",
+        notifications: "Enable Notifications:",
+        save: "Save Settings",
+        saved: "Settings saved!",
+        logout: "Logout"
+      },
+      ja: {
+        settings: "設定",
+        currency: "通貨：",
+        monthlyBudget: "月間予算：",
+        language: "言語：",
+        notifications: "通知を有効にする：",
+        save: "設定を保存",
+        saved: "設定が保存されました！",
+        logout: "ログアウト"
+      }
+    };
 
-function translatePage(lang) {
-  document.querySelector('h2').textContent = translations[lang].settings;
-  document.querySelector('label[for="currency"]').textContent = translations[lang].currency;
-  document.querySelector('label[for="monthlyBudget"]').textContent = translations[lang].monthlyBudget;
-  document.querySelector('label[for="language"]').textContent = translations[lang].language;
-  document.querySelector('label[for="notifications"]').textContent = translations[lang].notifications;
-  document.querySelector('button[type="submit"]').textContent = translations[lang].save;
-  document.getElementById('saveMessage').textContent = translations[lang].saved;
-}
-
-// On page load, set language from localStorage if available
-const savedLang = localStorage.getItem('lang') || 'en';
-translatePage(savedLang);
-
-// Also update language immediately when changed
-document.getElementById('language').addEventListener('change', function() {
-  translatePage(this.value);
-});
-
-document.getElementById('settingsForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  const lang = document.getElementById('language').value;
-  localStorage.setItem('lang', lang);
-
-  const monthlyBudget = document.getElementById('monthlyBudget').value;
-
-  // Save to database via AJAX
-  fetch('../PHP/update_monthly_budget.php', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: 'monthlyBudget=' + encodeURIComponent(monthlyBudget)
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      document.getElementById('saveMessage').style.display = 'block';
-      setTimeout(() => {
-        document.getElementById('saveMessage').style.display = 'none';
-        location.reload();
-      }, 2000);
-    } else {
-      alert('Failed to update Monthly Budget: ' + (data.error || 'Unknown error'));
+    function translatePage(lang) {
+      document.querySelector('h2').textContent = translations[lang].settings;
+      document.querySelector('label[for="currency"]').textContent = translations[lang].currency;
+      document.querySelector('label[for="monthlyBudget"]').textContent = translations[lang].monthlyBudget;
+      document.querySelector('label[for="language"]').textContent = translations[lang].language;
+      document.querySelector('label[for="notifications"]').textContent = translations[lang].notifications;
+      document.querySelector('button[type="submit"]').textContent = translations[lang].save;
+      document.getElementById('saveMessage').textContent = translations[lang].saved;
+      document.getElementById('logoutBtn').textContent = translations[lang].logout;
     }
-  });
-});
 
-// Currency symbols
-const currencySymbols = {
-  JPY: "¥",
-  USD: "$",
-  EUR: "€"
-};
+    const savedLang = localStorage.getItem('lang') || 'en';
+    translatePage(savedLang);
 
-// Get saved currency or default to JPY
-const savedCurrency = localStorage.getItem('currency') || 'JPY';
+    document.getElementById('language').addEventListener('change', function() {
+      translatePage(this.value);
+    });
 
-// Update all currency displays (just the symbol, not the value)
-function updateCurrencySymbol(currency) {
-  document.querySelectorAll('[data-currency-amount]').forEach(el => {
-    const baseAmount = el.getAttribute('data-currency-amount');
-    el.textContent = currencySymbols[currency] + baseAmount;
-  });
-}
+    document.getElementById('settingsForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const lang = document.getElementById('language').value;
+      localStorage.setItem('lang', lang);
 
-// On page load, update all currency symbols
-updateCurrencySymbol(savedCurrency);
+      const monthlyBudget = document.getElementById('monthlyBudget').value;
 
-// When currency changes, update symbol and save to localStorage
-document.getElementById('currency').addEventListener('change', function() {
-  localStorage.setItem('currency', this.value);
-  updateCurrencySymbol(this.value);
-});
+      fetch('../PHP/update_monthly_budget.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'monthlyBudget=' + encodeURIComponent(monthlyBudget)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          document.getElementById('saveMessage').style.display = 'block';
+          setTimeout(() => {
+            document.getElementById('saveMessage').style.display = 'none';
+            location.reload();
+          }, 2000);
+        } else {
+          alert('Failed to update Monthly Budget: ' + (data.error || 'Unknown error'));
+        }
+      });
+    });
 
-// On page load, fetch and display the budget
-fetch('../PHP/get_summary.php')
-  .then(response => response.json())
-  .then(data => {
-    if (data.MonthlyBudget !== undefined) {
-      document.getElementById('monthlyBudget').value = data.MonthlyBudget;
-      document.getElementById('monthlyBudgetDisplay').setAttribute('data-currency-amount', data.MonthlyBudget);
-      updateCurrencySymbol(document.getElementById('currency').value);
+    const currencySymbols = {
+      JPY: "¥",
+      USD: "$",
+      EUR: "€"
+    };
+
+    const savedCurrency = localStorage.getItem('currency') || 'JPY';
+
+    function updateCurrencySymbol(currency) {
+      document.querySelectorAll('[data-currency-amount]').forEach(el => {
+        const baseAmount = el.getAttribute('data-currency-amount');
+        el.textContent = currencySymbols[currency] + baseAmount;
+      });
     }
-  });
+
+    updateCurrencySymbol(savedCurrency);
+
+    document.getElementById('currency').addEventListener('change', function() {
+      localStorage.setItem('currency', this.value);
+      updateCurrencySymbol(this.value);
+    });
+
+    fetch('../PHP/get_summary.php')
+      .then(response => response.json())
+      .then(data => {
+        if (data.MonthlyBudget !== undefined) {
+          document.getElementById('monthlyBudget').value = data.MonthlyBudget;
+          document.getElementById('monthlyBudgetDisplay')?.setAttribute('data-currency-amount', data.MonthlyBudget);
+          updateCurrencySymbol(document.getElementById('currency').value);
+        }
+      });
   </script>
 </body>
 </html>

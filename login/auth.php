@@ -18,6 +18,11 @@ try {
 $email = $_POST['email'] ?? '';
 $password = $_POST['password'] ?? '';
 
+if($_SESSION['user']) {
+    // すでにログインしている場合はセッションをクリア
+    unset($_SESSION['user']);
+}
+
 // ユーザー検索（メールアドレスで検索）
 $sql = "SELECT * FROM users WHERE email = :email";
 $stmt = $pdo->prepare($sql);
@@ -33,7 +38,8 @@ if ($user && password_verify($password, $user['password'])) {
     exit();
 } else {
     // 認証失敗
-    header("Location: ./index.php?error=メールアドレスまたはパスワードが間違っています");
+    $_SESSION['error'] = "メールアドレスまたはパスワードが間違っています";
+    header("Location: ./index.php");
     exit();
 }
 
