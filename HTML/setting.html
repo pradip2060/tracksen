@@ -44,6 +44,9 @@
     <form action="/tracksen/logout.php" method="POST" style="margin-top: 20px;">
       <button type="submit" class="logout-button" id="logoutBtn">Logout</button>
     </form>
+
+    <!-- Redirect to Dashboard Button -->
+    <button onclick="window.location.href='index.html'" class="dashboard-button">Go to Dashboard</button>
   </div>
 
   <!-- Footer -->
@@ -125,9 +128,12 @@
       const lang = document.getElementById('language').value;
       localStorage.setItem('lang', lang);
 
-      const monthlyBudget = document.getElementById('monthlyBudget').value;
+      saveMonthlyBudget();
+    });
 
-      fetch('../PHP/update_monthly_budget.php', {
+    function saveMonthlyBudget() {
+      const monthlyBudget = document.getElementById('monthlyBudget').value;
+      fetch('../php/update_budget.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: 'monthlyBudget=' + encodeURIComponent(monthlyBudget)
@@ -135,16 +141,13 @@
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          document.getElementById('saveMessage').style.display = 'block';
-          setTimeout(() => {
-            document.getElementById('saveMessage').style.display = 'none';
-            location.reload();
-          }, 2000);
+          alert('Monthly budget updated!');
+          location.reload();
         } else {
-          alert('Failed to update Monthly Budget: ' + (data.error || 'Unknown error'));
+          alert('Error: ' + data.error);
         }
       });
-    });
+    }
 
     const currencySymbols = {
       JPY: "¥",

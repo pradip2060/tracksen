@@ -17,6 +17,7 @@ body {
   padding: 20px;
   display: flex;
   flex-direction: column;
+  overflow-x: auto;
 }
 .sidebar img {
   border-radius: 50%;

@@ -24,6 +24,8 @@
       </div>
     </div>
     
+    <!-- Redirect to Dashboard Button -->
+    <button onclick="window.location.href='index.html'" class="dashboard-button">Go to Dashboard</button>
     </table>
   </div>
   <script>
@@ -156,6 +158,20 @@ translatePage(savedLang);
   opacity: 1;
   background: linear-gradient(90deg, #6ee7b7 0%, #4f8cff 100%);
   color: #222;
+}
+.dashboard-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  color: #fff;
+  background-color: #4f8cff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.dashboard-button:hover {
+  background-color: #6ee7b7;
 }
 </style>
 </body>
